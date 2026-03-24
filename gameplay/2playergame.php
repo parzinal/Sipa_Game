@@ -15,9 +15,27 @@ include '../dbconnection.php';
             margin: 0;
             padding: 0;
             font-family: 'Press Start 2P', cursive;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-color: #06121f;
+            background-image:
+                radial-gradient(circle at 15% 20%, rgba(0, 214, 255, 0.18) 0%, transparent 40%),
+                radial-gradient(circle at 85% 80%, rgba(0, 255, 170, 0.14) 0%, transparent 45%),
+                linear-gradient(rgba(0, 214, 255, 0.12) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 214, 255, 0.12) 1px, transparent 1px),
+                linear-gradient(135deg, #06121f 0%, #0a1e33 55%, #102943 100%);
+            background-size: auto, auto, 40px 40px, 40px 40px, auto;
+            background-position: center, center, 0 0, 0 0, center;
+            animation: techGridShift 18s linear infinite;
             color: white;
             overflow: hidden;
+        }
+
+        @keyframes techGridShift {
+            0% {
+                background-position: center, center, 0 0, 0 0, center;
+            }
+            100% {
+                background-position: center, center, 40px 40px, 40px 40px, center;
+            }
         }
 
         #startScreen {
@@ -187,7 +205,16 @@ include '../dbconnection.php';
             position: relative;
             width: 100vw;
             height: 100vh;
-            background: url('../assets/sipa-background.jpg') center/cover no-repeat, linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-color: #06121f;
+            background-image:
+                radial-gradient(circle at 20% 15%, rgba(0, 214, 255, 0.18) 0%, transparent 35%),
+                radial-gradient(circle at 80% 85%, rgba(0, 255, 170, 0.14) 0%, transparent 40%),
+                linear-gradient(rgba(0, 214, 255, 0.12) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 214, 255, 0.12) 1px, transparent 1px),
+                linear-gradient(140deg, #06121f 0%, #0a1e33 52%, #102943 100%);
+            background-size: auto, auto, 36px 36px, 36px 36px, auto;
+            background-position: center, center, 0 0, 0 0, center;
+            animation: techGridShift 16s linear infinite;
             overflow: hidden;
         }
 
@@ -609,7 +636,7 @@ let sipaState = {
     y: 100,
     velocityY: 0,
     velocityX: 0,
-    gravity: 0.5, // Reduced from 0.6 to 0.5 (slower fall)
+    gravity: 0.38,
     bouncing: false,
     angle: 0
 };
@@ -1244,7 +1271,7 @@ function dropBall() {
     console.log('Dropping ball...');
     isGameActive = true;
     sipaState.bouncing = true;
-    sipaState.velocityY = 2.5; // Initial drop velocity
+    sipaState.velocityY = 1.8; // Slower initial drop
     sipaState.velocityX = 0; // Start with no horizontal movement
     
     // Make sure the physics loop starts
@@ -1304,7 +1331,7 @@ function sipaPhysicsLoop() {
         sipaState.velocityX = -Math.abs(sipaState.velocityX) * 0.8;
     }
     
-    sipaState.angle += 8;
+    sipaState.angle += 5;
     
     const sipaImg = document.getElementById('sipa');
     if (sipaImg) {
@@ -1413,16 +1440,16 @@ function triggerAutoKick(playerIndex) {
         spriteElement.src = CHARACTERS[characterName].kick;
     }
     
-    // Keep existing kick physics
-    sipaState.y = player.y + player.height * 0.3;
+    // Raise launch point and kick arc so volleys stay alive longer.
+    sipaState.y = player.y + player.height * 0.22;
     
-    const kickPower = 22 + Math.random() * 6;
-    const angle = -65 * Math.PI / 180;
+    const kickPower = 19 + Math.random() * 4;
+    const angle = -68 * Math.PI / 180;
     
     sipaState.velocityY = Math.sin(angle) * kickPower;
     sipaState.velocityX = Math.cos(angle) * kickPower * player.direction;
     
-    sipaState.velocityY -= 4;
+    sipaState.velocityY -= 3.2;
     sipaState.angle = 180;
     
     if (player.direction > 0) {
@@ -1431,8 +1458,8 @@ function triggerAutoKick(playerIndex) {
         sipaState.x = player.x + player.width * 0.2 - sipaState.width;
     }
     
-    sipaState.velocityY += (Math.random() - 0.5) * 3;
-    sipaState.velocityX += (Math.random() - 0.5) * 2;
+    sipaState.velocityY += (Math.random() - 0.5) * 0.9;
+    sipaState.velocityX += (Math.random() - 0.5) * 1.2;
     
     // Play sound and create retro popup
     playHitSound();
