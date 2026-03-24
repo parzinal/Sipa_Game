@@ -3,11 +3,17 @@
 include '../dbconnection.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['saveScore'])) {
-    $playerName = $_POST['playerName'];
-    $finalScore = $_POST['finalScore'];
+    header('Content-Type: application/json');
+
+    $playerName = trim((string)($_POST['playerName'] ?? ''));
+    $finalScore = isset($_POST['finalScore']) ? (int)$_POST['finalScore'] : 0;
+
+    if ($playerName === '' || $finalScore < 0) {
+        exit(json_encode(['success' => false, 'message' => 'Invalid player name or score.']));
+    }
     
-    // First check if player already has a score
-    $checkSql = "SELECT id, score FROM game_scores WHERE player_name = ?";
+    // Match nickname in a case-insensitive, trim-safe way.
+    $checkSql = "SELECT id, score FROM game_scores WHERE LOWER(TRIM(player_name)) = LOWER(TRIM(?)) LIMIT 1";
     $checkStmt = $conn->prepare($checkSql);
     $checkStmt->bind_param("s", $playerName);
     $checkStmt->execute();
