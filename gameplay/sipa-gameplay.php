@@ -454,7 +454,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['saveScore'])) {
             y: canvas.height - 380,   // Adjusted vertical position to align closer to the floor
             width: 120,              // Reduced from 160
             height: 360,             // Reduced from 460
-            speed: 10,
+            speed: 7,
             moving: false
         };
 
@@ -464,8 +464,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['saveScore'])) {
             x: character.x + character.width / 2 - 40 + 40, // <-- add +40 to move right
             y: character.y + character.height * 0.6 - 40, // Adjusted to align with the new height
             velocityY: -10,
-            velocityX: 2,
-            gravity: 0.5,
+            velocityX: 0.6,
+            gravity: 0.3,
             bouncing: true,
             angle: 0
         };
@@ -787,6 +787,33 @@ characterOptions.forEach(option => {
             }
         }
 
+        function calculateKickTrajectory(hitXLeft, hitXRight) {
+            const sipaCenterX = sipaState.x + sipaState.width / 2;
+            const hitCenterX = (hitXLeft + hitXRight) / 2;
+            const halfHitWidth = (hitXRight - hitXLeft) / 2;
+
+            // Contact point and movement direction influence where the sipa flies.
+            const contactOffset = Math.max(-1, Math.min(1, (sipaCenterX - hitCenterX) / halfHitWidth));
+            const moveBias = character.moving === 'left' ? -0.25 : character.moving === 'right' ? 0.25 : 0;
+
+            let direction = contactOffset + moveBias;
+            if (Math.abs(direction) < 0.15) {
+                direction = Math.random() < 0.5 ? -0.35 : 0.35;
+            }
+
+            const cornerMargin = canvas.width * 0.12;
+            const targetX = direction < 0 ? cornerMargin : canvas.width - cornerMargin;
+            const framesToApex = 52;
+
+            let velocityX = (targetX - sipaCenterX) / framesToApex;
+            velocityX = Math.max(-2.8, Math.min(2.8, velocityX));
+
+            const liftVariation = (Math.random() - 0.5) * 0.5;
+            const velocityY = -18.6 + liftVariation;
+
+            return { velocityX, velocityY };
+        }
+
         function updateSipaPosition() {
             if (sipaState.bouncing) {
                 sipaState.velocityY += sipaState.gravity;
@@ -809,10 +836,11 @@ characterOptions.forEach(option => {
                     sipaState.x + sipaState.width >= hitXLeft &&
                     sipaState.x <= hitXRight
                 ) {
-                    // When hit, bounce higher and increase difficulty
+                    // Trajectory follows kick contact so shots go toward corners naturally.
+                    const kickTrajectory = calculateKickTrajectory(hitXLeft, hitXRight);
                     sipaState.y = hitY - sipaState.height;
-                    sipaState.velocityY = -20 - difficulty * 2;
-                    sipaState.velocityX = (Math.random() < 0.5 ? -1 : 1) * (Math.random() * 4 + 1 + difficulty);
+                    sipaState.velocityY = kickTrajectory.velocityY;
+                    sipaState.velocityX = kickTrajectory.velocityX;
 
                     createParticles(sipaState.x + sipaState.width / 2, sipaState.y + sipaState.height / 2);
                     createHitParticles(sipaState.x + sipaState.width / 2, sipaState.y + sipaState.height / 2);
@@ -822,8 +850,6 @@ characterOptions.forEach(option => {
                     setTimeout(() => {
                         sipa.style.transform = `scale(1) rotate(${sipaState.angle}deg)`;
                     }, 100);
-
-                    difficulty += 0.1;
 
                     updateScore();
                     updateCombo();
@@ -871,7 +897,7 @@ characterOptions.forEach(option => {
                         sipaState.bouncing = false;
                         sipaState.y = character.y - sipaState.height; // Above the character
                         sipaState.x = character.x + character.width / 2 - sipaState.width / 2 + 40; // <-- add +40 here too
-                        sipaState.velocityY = 5; // Start falling again
+                        sipaState.velocityY = 3.8; // Start falling again
                         sipaState.velocityX = 0; // No horizontal movement initially
 
                         setTimeout(() => {
@@ -1139,7 +1165,7 @@ function startCountdown(isRetry = false) {
             // Reset sipa position
             sipaState.y = character.y - sipaState.height;
             sipaState.x = character.x + character.width / 2 - sipaState.width / 2 + 40;
-            sipaState.velocityY = 5;
+            sipaState.velocityY = 3.8;
             sipaState.velocityX = 0;
             sipaState.bouncing = true;
 
