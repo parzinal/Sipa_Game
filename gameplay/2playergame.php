@@ -271,9 +271,20 @@ include '../dbconnection.php';
             bottom: 10px;
             width: 8px;
             height: 350px;
-            background: linear-gradient(to bottom, #8B4513 0%, #A0522D 100%);
-            border: 2px solid #654321;
-            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            background: linear-gradient(
+                to right,
+                #8a97a3 0%,
+                #d7e0e8 20%,
+                #b9c4cf 45%,
+                #eef3f8 55%,
+                #8f9da9 80%,
+                #6f7b87 100%
+            );
+            border: 2px solid #6b7782;
+            border-radius: 4px;
+            box-shadow:
+                0 0 10px rgba(0, 0, 0, 0.45),
+                0 0 16px rgba(200, 220, 235, 0.2);
             z-index: 5;
         }
 
@@ -284,10 +295,10 @@ include '../dbconnection.php';
             transform: translateX(-50%);
             width: 16px;
             height: 15px;
-            background: linear-gradient(to bottom, #8B4513, #654321);
+            background: linear-gradient(to bottom, #dfe7ee, #8d9aa6);
             border-radius: 8px 8px 0 0;
-            border: 2px solid #654321;
-            box-shadow: 0 0 5px rgba(0,0,0,0.3);
+            border: 2px solid #6b7782;
+            box-shadow: 0 0 6px rgba(180, 205, 225, 0.35);
         }
 
         .net-mesh {
@@ -302,18 +313,40 @@ include '../dbconnection.php';
                     0deg,
                     transparent,
                     transparent 8px,
-                    rgba(255,255,255,0.2) 8px,
-                    rgba(255,255,255,0.2) 9px
+                    rgba(175, 215, 235, 0.28) 8px,
+                    rgba(175, 215, 235, 0.28) 9px
                 ),
                 repeating-linear-gradient(
                     90deg,
                     transparent,
                     transparent 12px,
-                    rgba(255,255,255,0.15) 12px,
-                    rgba(255,255,255,0.15) 13px
+                    rgba(175, 215, 235, 0.24) 12px,
+                    rgba(175, 215, 235, 0.24) 13px
                 );
+            opacity: 0.95;
+            filter: drop-shadow(0 0 4px rgba(140, 195, 230, 0.25));
             pointer-events: none;
             z-index: 4;
+        }
+
+        .net-2d .net-mesh {
+            background-image:
+                repeating-linear-gradient(
+                    0deg,
+                    rgba(160, 210, 235, 0.18) 0px,
+                    rgba(160, 210, 235, 0.18) 2px,
+                    transparent 2px,
+                    transparent 10px
+                ),
+                repeating-linear-gradient(
+                    90deg,
+                    rgba(160, 210, 235, 0.16) 0px,
+                    rgba(160, 210, 235, 0.16) 2px,
+                    transparent 2px,
+                    transparent 14px
+                );
+            opacity: 0.75;
+            filter: none;
         }
 
         .net-shadow {
@@ -323,7 +356,7 @@ include '../dbconnection.php';
             bottom: 5px;
             width: 12px;
             height: 8px;
-            background: radial-gradient(ellipse, rgba(0,0,0,0.4) 0%, transparent 70%);
+            background: radial-gradient(ellipse, rgba(35,50,62,0.5) 0%, transparent 70%);
             z-index: 3;
         }
 
@@ -620,6 +653,7 @@ let player2Position = 100;
 const moveSpeed = 7;
 const minPosition = 0;
 const maxPosition = window.innerWidth / 2 - 120;
+const NET_MODE = 'none'; // '2d' or 'none' (pole always stays visible)
 
 // Sipa game variables
 let currentTurn = 1;
@@ -1006,6 +1040,14 @@ function startRound() {
             PLAYER 1: A/D - MOVE | PLAYER 2: J/L - MOVE
         </div>
     `;
+
+    if (NET_MODE === 'none') {
+        gameArea.querySelectorAll('.net-shadow, .net-mesh, .net-collision-debug').forEach(el => {
+            el.style.display = 'none';
+        });
+    } else {
+        gameArea.classList.add('net-2d');
+    }
     
     initializeGameplay();
     setTimeout(() => {
@@ -1294,30 +1336,25 @@ function sipaPhysicsLoop() {
     sipaState.x += sipaState.velocityX;
     sipaState.y += sipaState.velocityY;
     
-    // Enhanced net collision detection - Made net taller
+    // Pole collision is always active so what players see matches gameplay.
     const netCenterX = window.innerWidth / 2;
     const netWidth = 8;
-    const netHeight = 250; // Increased from 180 to 250 (taller net)
+    const netHeight = NET_MODE === 'none' ? 350 : 250;
     const netLeft = netCenterX - netWidth / 2;
     const netRight = netCenterX + netWidth / 2;
-    const netTop = window.innerHeight - 10 - netHeight; // Adjusted for taller net
+    const netTop = window.innerHeight - 10 - netHeight;
     const netBottom = window.innerHeight - 10;
-    
-    // Check if sipa tries to cross through net horizontally
+
     if (sipaState.y + sipaState.height > netTop && sipaState.y < netBottom) {
-        // Sipa is at net height, check horizontal crossing
         if (sipaState.x + sipaState.width > netLeft && sipaState.x < netRight) {
-            // Bounce off net based on which side sipa came from
             if (sipaState.velocityX > 0) {
-                // Coming from left, bounce back left
                 sipaState.x = netLeft - sipaState.width;
                 sipaState.velocityX = -Math.abs(sipaState.velocityX) * 0.8;
             } else {
-                // Coming from right, bounce back right
                 sipaState.x = netRight;
                 sipaState.velocityX = Math.abs(sipaState.velocityX) * 0.8;
             }
-            sipaState.velocityY *= 0.6; // Reduce vertical velocity on net hit
+            sipaState.velocityY *= 0.6;
         }
     }
     
